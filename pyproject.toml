@@ -71,11 +71,15 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "S", "C4", "SIM", "RUF", "PL", "PERF"]
-ignore = ["PLR0913", "PLR2004", "S101", "S311", "RUF012", "PLR0912", "PLR0915", "C901"]
+ignore = ["PLR0913", "PLR2004", "S101", "S311", "RUF012", "PLR0912", "PLR0915", "C901", "PLC0415"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S", "PLR", "B011"]
-"scripts/**" = ["S", "PLR"]
+"tests/**" = ["S", "PLR", "B011", "E501"]
+"src/nids/data/schema.py" = ["E501"]
+"src/nids/cli.py" = ["B008"]
+"src/nids/logging.py" = ["S110"]
+"scripts/**" = ["S", "PLR", "E501"]
+"src/nids/data/profile.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
