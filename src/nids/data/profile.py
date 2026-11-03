@@ -41,22 +41,29 @@ def profile(df: pl.DataFrame) -> dict[str, Any]:
                 }
             )
         constant = [f for f in FLOW_FEATURES if sub.get_column(f).n_unique() == 1]
-        # destination-port label purity: share of attack rows whose dst_port is >= 99% attack
-        purity = (
-            sub.group_by("dst_port")
-            .agg(pl.len().alias("n"), pl.col("is_attack").mean().alias("p"))
-            .filter(pl.col("p") >= 0.99)
-        )
+        # destination port as a label proxy: attack share on the five most-attacked ports
         attack_rows = int(sub.get_column("is_attack").sum())
-        pure_attack_rows = int(
-            sub.join(purity, on="dst_port", how="inner").get_column("is_attack").sum()
+        per_port = sub.group_by("dst_port").agg(
+            pl.col("is_attack").sum().alias("attack_rows"),
+            pl.len().alias("total"),
+            pl.col("is_attack").mean().alias("attack_share"),
         )
+        top_ports = per_port.sort("attack_rows", descending=True).head(5)
+        port_rows = [
+            {
+                "port": int(r["dst_port"]),
+                "attack_rows": int(r["attack_rows"]),
+                "total_rows": int(r["total"]),
+                "attack_share": round(float(r["attack_share"]), 4),
+            }
+            for r in top_ports.iter_rows(named=True)
+        ]
         out["datasets"][str(ds)] = {
             "rows": sub.height,
             "attack_rows": attack_rows,
             "attack_frac": round(attack_rows / max(sub.height, 1), 4),
             "constant_features": constant,
-            "attack_rows_on_pure_ports_frac": round(pure_attack_rows / max(attack_rows, 1), 4),
+            "top_attack_ports": port_rows,
             "days": per_day,
         }
     return out
@@ -68,9 +75,17 @@ def to_markdown(p: dict[str, Any]) -> str:
         lines += [
             f"### {ds}",
             "",
-            f"Rows: {d['rows']:,}; attack rows: {d['attack_rows']:,} ({d['attack_frac']:.1%}). "
-            f"Share of attack rows whose destination port is >= 99% attack: {d['attack_rows_on_pure_ports_frac']:.1%} "
-            "(why the raw port is not a feature).",
+            f"Rows: {d['rows']:,}; attack rows: {d['attack_rows']:,} ({d['attack_frac']:.1%}).",
+            "",
+            "Most-attacked destination ports with the attack share of all flows on that port "
+            "(the raw port is a label proxy, so the model only sees a 3-level bucket):",
+            "",
+            "| Port | Attack rows | All rows | Attack share |",
+            "|---:|---:|---:|---:|",
+            *[
+                f"| {p['port']} | {p['attack_rows']:,} | {p['total_rows']:,} | {p['attack_share']:.1%} |"
+                for p in d["top_attack_ports"]
+            ],
             "",
             f"Constant features in this dataset: {', '.join(d['constant_features']) or 'none'}.",
             "",

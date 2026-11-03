@@ -8,7 +8,7 @@ S3="https://cse-cic-ids2018.s3.ca-central-1.amazonaws.com/Processed%20Traffic%20
 mkdir -p "$ROOT/cicids2017" "$ROOT/cseids2018"
 fetch() { # url dest
   if [ -s "$2" ]; then echo "exists $2"; return; fi
-  curl -L --fail --retry 5 --retry-delay 5 -C - -o "$2.part" "$1" && mv "$2.part" "$2" && echo "done $2"
+  curl -sS -L --fail --retry 5 --retry-delay 5 -C - -o "$2.part" "$1" && mv "$2.part" "$2" && echo "done $2"
 }
 for f in Monday-WorkingHours.pcap_ISCX.csv Tuesday-WorkingHours.pcap_ISCX.csv Wednesday-workingHours.pcap_ISCX.csv \
          Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv Thursday-WorkingHours-Afternoon-Infilteration.pcap_ISCX.csv \

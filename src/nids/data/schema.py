@@ -59,8 +59,8 @@ FEATURE_SPECS: Final[tuple[FeatureSpec, ...]] = (
     FeatureSpec("bwd_iat_min",          "Bwd IAT Min",                  "Bwd IAT Min",       "duration_us", nonneg=False),
     FeatureSpec("fwd_psh_flags",        "Fwd PSH Flags",                "Fwd PSH Flags",     "flag"),
     FeatureSpec("fwd_urg_flags",        "Fwd URG Flags",                "Fwd URG Flags",     "flag"),
-    FeatureSpec("fwd_header_len",       "Fwd Header Length",            "Fwd Header Len",    "bytes", nonneg=False),
-    FeatureSpec("bwd_header_len",       "Bwd Header Length",            "Bwd Header Len",    "bytes", nonneg=False),
+    FeatureSpec("fwd_header_len",       "Fwd Header Length",            "Fwd Header Len",    "bytes"),
+    FeatureSpec("bwd_header_len",       "Bwd Header Length",            "Bwd Header Len",    "bytes"),
     FeatureSpec("fwd_pkts_s",           "Fwd Packets/s",                "Fwd Pkts/s",        "rate"),
     FeatureSpec("bwd_pkts_s",           "Bwd Packets/s",                "Bwd Pkts/s",        "rate"),
     FeatureSpec("pkt_len_min",          "Min Packet Length",            "Pkt Len Min",       "bytes"),
@@ -261,8 +261,8 @@ class DayInfo:
     note: str = ""
 
 
-#: Registry of the raw files used. Expected row counts are the published figures (data rows,
-#: excluding header) and are verified by ``nids data validate``.
+#: Registry of the raw files used. Expected row counts are data rows excluding the header and
+#: (2018) the header rows repeated inside the files; verified by ``nids data validate``.
 DAYS: Final[tuple[DayInfo, ...]] = (
     DayInfo(Dataset.CIC2017, "2017-07-03-mon", "Monday-WorkingHours.pcap_ISCX.csv", 529_918, ()),
     DayInfo(
@@ -327,7 +327,7 @@ DAYS: Final[tuple[DayInfo, ...]] = (
         Dataset.CSE2018,
         "2018-02-16-fri",
         "Friday-16-02-2018_TrafficForML_CICFlowMeter.csv",
-        1_048_575,
+        1_048_574,
         ("dos_hulk", "dos_slowhttptest"),
     ),
     DayInfo(
@@ -348,7 +348,7 @@ DAYS: Final[tuple[DayInfo, ...]] = (
         Dataset.CSE2018,
         "2018-03-01-thu",
         "Thursday-01-03-2018_TrafficForML_CICFlowMeter.csv",
-        331_125,
+        331_100,
         ("infiltration",),
         label_reliable=False,
         note="Infiltration labels cover ordinary traffic of the victim host (Liu et al. 2022)",

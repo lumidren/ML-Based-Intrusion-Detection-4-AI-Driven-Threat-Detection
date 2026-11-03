@@ -78,6 +78,7 @@ ignore = ["PLR0913", "PLR2004", "S101", "S311", "RUF012", "PLR0912", "PLR0915", 
 "src/nids/data/schema.py" = ["E501"]
 "src/nids/cli.py" = ["B008"]
 "src/nids/logging.py" = ["S110"]
+"src/nids/features/synth.py" = ["PLR0917"]
 "scripts/**" = ["S", "PLR", "E501"]
 "src/nids/data/profile.py" = ["E501"]
 
@@ -94,7 +95,7 @@ plugins = ["pydantic.mypy"]
 module = [
   "scapy.*", "lightgbm.*", "xgboost.*", "shap.*", "sklearn.*", "mlflow.*", "optuna.*",
   "river.*", "confluent_kafka.*", "pyarrow.*", "matplotlib.*", "great_expectations.*",
-  "redis.*", "prometheus_client.*", "structlog.*", "psycopg.*", "pandas.*", "scipy.*", "joblib.*",
+  "redis.*", "dpkt.*", "prometheus_client.*", "structlog.*", "psycopg.*", "pandas.*", "scipy.*", "joblib.*",
 ]
 ignore_missing_imports = true
 
