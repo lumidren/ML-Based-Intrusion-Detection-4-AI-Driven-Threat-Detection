@@ -1,0 +1,136 @@
+# Methodology
+
+This document fixes the experimental protocol *before* any model is trained. Every later
+result in this repository (model card, paper, CI model-quality gate) is reported under
+this protocol, and any deviation is listed in the paper's limitations section.
+
+## 1. Problem statement
+
+Given a bidirectional network flow summarised by CICFlowMeter-style statistics, decide
+(a) whether the flow is malicious (binary detector) and (b) if so, which attack family it
+belongs to (multi-class classifier). The system must run on live traffic: features are
+computed by our own extractor from packets, not read from the published CSVs, so the
+extractor must reproduce the training-time feature semantics (train/serve parity).
+
+Operational objective: maximise recall on attack flows at an *operator-chosen* false-positive
+budget, with calibrated scores so the alert threshold is meaningful across days and sites.
+
+## 2. Datasets
+
+| Dataset | Capture dates | Flows (published) | Attack families | Role |
+|---|---|---|---|---|
+| CIC-IDS2017 | 3-7 Jul 2017, 5 days | 2,830,743 | 14 + BENIGN | primary train / in-distribution test |
+| CSE-CIC-IDS2018 | 14 Feb - 2 Mar 2018, 10 days | ~16.2M (6 days used, see data card) | 14 + Benign | cross-dataset generalisation test and secondary training |
+
+See [DATA_CARD.md](DATA_CARD.md) for provenance, known labelling errors and the exact
+clean-up applied. The *fixes* are part of the methodology because they change the results
+materially (Engelen et al. 2021; Lanvin et al. 2023; Liu et al. 2022).
+
+## 3. Leakage controls
+
+Leakage is the dominant source of inflated NIDS results. Controls, each enforced by a test
+in `tests/test_splits.py` and `tests/test_data_pipeline.py`:
+
+1. **Temporal split, never random.** Train on earlier capture time, validate on later time,
+   test on the latest time within each day, and additionally hold out *whole days* for
+   out-of-time evaluation. Random row splits put the two halves of the same attack burst in
+   train and test and are forbidden (`nids.data.splits.temporal_split`).
+2. **Group integrity.** Flows sharing a (dst port, protocol, 5-minute timestamp bucket)
+   group are kept on one side of every split, so a burst is never straddled. When IPs are
+   available (2018 day 20-02) the group also includes the source host.
+3. **Deduplication before splitting.** Exact duplicate rows (all features) are removed
+   first, so no identical vector appears on both sides.
+4. **Fit-on-train-only preprocessing.** Imputation constants, clipping bounds and scalers
+   are fit on the training fold inside a `Pipeline`; the test fold never touches them.
+   Verified by a test that mutates the test fold and asserts the fitted transformer is
+   unchanged.
+5. **No identifier features.** Flow ID, IPs, source port and timestamp are dropped from the
+   feature matrix. Destination port is kept *only* as a bucketed categorical (well-known /
+   registered / ephemeral) in the default feature set, because the raw destination port is
+   a label proxy in CIC datasets (the attack machines target fixed ports).
+6. **Day-of-capture is not a feature** and class priors are not tuned on test days.
+7. **Cross-dataset evaluation** trains on one dataset and tests on the other with *no*
+   re-fitting of anything, including thresholds.
+
+## 4. Feature set
+
+The canonical feature schema (`nids.data.schema.FEATURES`) is the intersection of
+CICFlowMeter v3 features present in both datasets, after:
+
+* dropping the duplicated `Fwd Header Length.1` column (CIC-IDS2017 bug);
+* dropping the eight features that are constant zero in both datasets
+  (`Bwd PSH Flags`, `Bwd URG Flags`, `Fwd Avg Bytes/Bulk`, `Fwd Avg Packets/Bulk`,
+  `Fwd Avg Bulk Rate`, `Bwd Avg Bytes/Bulk`, `Bwd Avg Packets/Bulk`, `Bwd Avg Bulk Rate`);
+* mapping the 2018 column names to the 2017 names (`nids.data.schema.CSE2018_RENAME`).
+
+The feature extractor in `nids.features.flow` computes exactly this schema from packets.
+Train/serve parity is tested by extracting features from synthetic PCAPs whose flow
+statistics are known analytically, and from recorded traffic whose CICFlowMeter output is
+published, with per-feature tolerances documented in `tests/test_parity.py`.
+
+## 5. Models
+
+* **Baselines:** majority class; logistic regression on standardised features; random
+  forest.
+* **Primary:** LightGBM (binary) with class weighting, and LightGBM (multi-class) for the
+  attack-family stage. XGBoost is trained as a cross-check.
+* **Hyper-parameters** are chosen by Optuna on the *validation* fold only (time-ordered,
+  from the training days); objective = PR-AUC.
+* **Calibration:** isotonic regression fit on the validation fold; reported with
+  expected calibration error (ECE, 15 bins) and reliability diagrams.
+* **Thresholding:** the operating threshold is chosen on validation to meet a target
+  false-positive rate (default 0.1%) and is frozen before any test evaluation.
+* **Unsupervised complement:** an Isolation Forest on benign-only training flows provides
+  an anomaly score for novel attacks; it is evaluated leave-one-family-out and never on
+  families it saw.
+
+## 6. Evaluation protocol
+
+All metrics are reported on (i) the in-time test fold, (ii) held-out days, and
+(iii) the other dataset. Metrics:
+
+* PR-AUC (primary, robust to the class skew), ROC-AUC (secondary).
+* Recall at FPR = 0.1% and at FPR = 1% (the operator-facing numbers).
+* Per-family recall and macro-F1 for the multi-class stage.
+* Calibration: ECE and Brier score.
+* Latency: p50/p95/p99 inference time per flow, single core, batch sizes 1 and 512.
+
+Confidence intervals are bootstrap percentile intervals (1,000 resamples over flows,
+stratified by day). Seeds are fixed (`nids.config.SEED = 20170703`) and every run is logged
+to MLflow with the data manifest hash, git commit and environment.
+
+## 7. Ablations
+
+Each ablation re-runs the full protocol with one change:
+
+1. random split instead of temporal (to quantify the leakage inflation);
+2. no deduplication;
+3. raw destination port included as a numeric feature;
+4. no label corrections (original CSV labels);
+5. features restricted to the 20 most important (SHAP) features;
+6. training on 2017 only vs. 2017 + 2018.
+
+## 8. Reproducibility
+
+`nids reproduce` runs: download with checksum verification -> canonicalise -> validate ->
+split -> train -> evaluate -> write `reports/`. Every table in the paper is generated by
+code in `scripts/` from the MLflow run store; no number is typed in by hand.
+
+## 9. Ethics and scope
+
+The datasets are synthetic testbed captures released for research by the Canadian
+Institute for Cybersecurity; they contain no real user data. The live capture agent must
+only be deployed on networks the operator is authorised to monitor
+(see [SECURITY.md](../SECURITY.md) and [THREAT_MODEL.md](THREAT_MODEL.md)).
+
+## References
+
+* Sharafaldin, Lashkari, Ghorbani. *Toward Generating a New Intrusion Detection Dataset and
+  Intrusion Traffic Characterization.* ICISSP 2018.
+* Engelen, Rimmer, Joosen. *Troubleshooting an Intrusion Detection Dataset: the CICIDS2017
+  Case Study.* IEEE S&P Workshops 2021.
+* Lanvin, Gimenez, Han, Majorczyk, Me, Totel. *Errors in the CICIDS2017 Dataset and the
+  Significant Differences in Detection Performances It Makes.* CRiSIS 2022.
+* Liu, Engelen, Lynar, Essam, Joosen. *Error Prevalence in NIDS Datasets: A Case Study on
+  CIC-IDS-2017 and CSE-CIC-IDS-2018.* IEEE CNS 2022.
+* Arp et al. *Dos and Don'ts of Machine Learning in Computer Security.* USENIX Security 2022.
