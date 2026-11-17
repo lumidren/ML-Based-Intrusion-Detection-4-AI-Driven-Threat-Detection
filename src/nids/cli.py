@@ -84,7 +84,7 @@ def data_validate(
     days: dict[str, object] = {}
     passed = True
     for day, path in iter_day_files(s.processed_dir, stage):
-        rep = validate_canonical(pl.read_parquet(path), allow_inf=not strict)
+        rep = validate_canonical(pl.scan_parquet(path), allow_inf=not strict)
         if strict:  # cleaning changes row counts by design
             rep.expectations = [
                 e for e in rep.expectations if e.name != "row_counts_match_published"
