@@ -21,6 +21,17 @@ Q8  Standard deviations are sample (n-1) statistics; a single value gives 0.
 Q9  Rates divide by the duration in seconds; a zero duration yields ``inf`` (the CSVs contain
     ``Infinity``), which the cleaning step imputes.
 Q10 UDP and other non-TCP flows report TCP windows of -1 and header length 8 (UDP) or 0.
+Q11 ``init_bwd_win_byts`` is the window of the *last* backward packet: CICFlowMeter assigns
+    ``Init_Win_bytes_backward`` on every backward packet (BasicFlow.addPacket). Verified on
+    the 14-02-2018 victim capture: 99.99% of 382,586 matched flows, against 75% for the
+    first backward window.
+
+The published TCP flag columns (``*_flag_cnt``, ``fwd_psh_flags``, ``fwd_urg_flags``) of
+CSE-CIC-IDS2018 cannot be reproduced from packets: on the matched flows the published
+``psh_flag_cnt`` follows the SYN bit and ``ack``/``urg`` follow FIN, while SYN, FIN and RST
+are always 0. The released CICFlowMeter source decodes flags correctly, so the CSVs come
+from an earlier build. The extractor keeps the Q4/Q5 semantics measured on CIC-IDS2017 and
+the flag columns are excluded from the model inputs (``schema.UNREPRODUCIBLE``).
 
 With ``compat=False`` the *corrected* semantics are used: flows end after FIN from both
 sides (plus the final ACK) or on RST, single-packet flows are emitted, the first packet is
@@ -198,7 +209,7 @@ class FlowState:
             self.bwd_header += p.header_len
             if self.bwd_n:
                 self.bwd_iat.add(p.ts_us - self.bwd_last_us)
-            else:
+            if self.compat or not self.bwd_n:  # Q11: compat keeps the last backward window
                 self.init_bwd_win = p.window if p.is_tcp else -1
             self.bwd_last_us = p.ts_us
             self.bwd_n += 1

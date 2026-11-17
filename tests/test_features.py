@@ -259,6 +259,17 @@ def test_rst_closes_only_in_corrected_mode() -> None:
     assert len(out) == 1 and out[0].features["rst_flag_cnt"] == 1
 
 
+def test_backward_window_is_last_in_compat_first_in_corrected() -> None:
+    syn = pkt(0, flags=TCP_SYN, window=1000)
+    pkts = [syn, rev(syn, 10, window=26847), rev(syn, 20, window=230), pkt(30, window=999)]
+    for compat, want in ((True, 230.0), (False, 26847.0)):
+        b = FlowBuilder(compat=compat)
+        for p in pkts:
+            b.add_packet(p)
+        f = b.flush()[0].features
+        assert f["init_bwd_win_byts"] == want and f["init_fwd_win_byts"] == 1000
+
+
 def test_single_packet_flows_dropped_in_compat_only() -> None:
     b = FlowBuilder(compat=True)
     b.add_packet(pkt(0, flags=TCP_SYN))
