@@ -180,7 +180,9 @@ def test_campaign_split_puts_every_family_in_every_fold() -> None:
     day = temporal_split(df, SplitConfig(protocol="day"))
     camp = temporal_split(df, SplitConfig(protocol="campaign"))
     assert_no_leakage(camp)
-    attack_folds = lambda x: set(x.filter(pl.col("is_attack")).get_column("fold"))  # noqa: E731
+    def attack_folds(x: pl.DataFrame) -> set[str]:
+        return set(x.filter(pl.col("is_attack")).get_column("fold"))
+
     assert attack_folds(day) == {"test"}  # the day protocol never trains on the burst
     assert attack_folds(camp) == {"train", "val", "test"}
     # the 3-minute burst has < MIN_CAMPAIGN_GROUPS minute blocks, so it is cut on row blocks

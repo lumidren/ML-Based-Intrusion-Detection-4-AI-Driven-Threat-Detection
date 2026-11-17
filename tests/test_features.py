@@ -387,7 +387,7 @@ def test_pcap_round_trip_and_frame(tmp_path: Path) -> None:
     assert df.filter((pl.col("dst_port") == 443) | (pl.col("src_port") == 443)).height == 10
     assert df.filter(pl.col("protocol") == 17).height == 1
     assert df.filter((pl.col("dst_port") >= 60) & (pl.col("dst_port") < 70)).height == 10
-    assert df.filter(pl.col("dst_port") == 443)["pkt_len_std"].min() >= 0
+    assert df.filter(pl.col("dst_port") == 443).select(pl.col("pkt_len_std").min() >= 0).item()
     corrected = extract_flows(path, compat=False)
     assert corrected.filter(pl.col("dst_port") == 22).height == 5
     assert list(iter_flows(path, limit=3)) != []
