@@ -15,11 +15,15 @@ and the absence of identical feature vectors across folds.
 
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 
 import polars as pl
 
+from nids.data.cleaning import row_hash
+from nids.data.loaders import iter_day_files
 from nids.data.schema import FLOW_FEATURES
 
 GROUP_ROWS = 5_000
@@ -150,17 +154,89 @@ def assert_no_leakage(df: pl.DataFrame) -> None:
                     f"time ordering violated on {day}: fold {i} starts before fold {i - 1} ends"
                 )
     # 3. no identical feature vector in train and any evaluation fold
-    feats = list(FLOW_FEATURES)
-    train = df.filter(pl.col("fold") == Fold.TRAIN.value).select(feats).unique()
-    evals = df.filter(pl.col("fold") != Fold.TRAIN.value).select(feats).unique()
-    dup = train.join(evals, on=feats, how="inner").height
+    hashed = df.select(pl.col("fold"), feature_hash().alias("h"))
+    dup = count_shared(
+        hashed.filter(pl.col("fold") == Fold.TRAIN.value).get_column("h"),
+        hashed.filter(pl.col("fold") != Fold.TRAIN.value).get_column("h"),
+    )
     if dup:
         raise LeakageError(f"{dup} identical feature vectors appear in train and evaluation folds")
+
+
+def feature_hash() -> pl.Expr:
+    """64-bit hash of the 68 flow features (see :func:`nids.data.cleaning.row_hash`)."""
+    return row_hash(list(FLOW_FEATURES))
+
+
+def count_shared(train_hashes: pl.Series, eval_hashes: pl.Series) -> int:
+    """Number of distinct feature vectors present in both sets of hashes."""
+    return int(eval_hashes.unique().is_in(train_hashes.unique().implode()).sum())
 
 
 def fold_summary(df: pl.DataFrame) -> pl.DataFrame:
     return (
         df.group_by(["dataset", "day", "fold"])
         .agg(pl.len().alias("rows"), pl.col("is_attack").sum().alias("attacks"))
+        .sort(["dataset", "day", "fold"])
+    )
+
+
+def split_dir(processed_root: Path, cfg: SplitConfig | None = None) -> pl.DataFrame:
+    """Split the ``clean`` stage one day at a time into ``splits/<fold>/<day>.parquet``.
+
+    Each day is split and checked with :func:`assert_no_leakage` on its own, so only one day
+    is in memory. A day-level split cannot see other days, so a second, streamed pass then
+    removes every evaluation row whose feature vector also occurs in the training fold of
+    *any* day (cross-day purge). Every written row carries its ``row_hash``.
+
+    Returns the fold summary with a ``purged`` column per (dataset, day, fold).
+    """
+    out_root = processed_root / "splits"
+    if out_root.exists():
+        shutil.rmtree(out_root)
+    train_hashes: list[pl.Series] = []
+    eval_files: list[tuple[str, str, str, Path]] = []
+    summaries: list[pl.DataFrame] = []
+    for day, path in iter_day_files(processed_root, "clean"):
+        df = temporal_split(pl.read_parquet(path), cfg)
+        assert_no_leakage(df)
+        df = df.with_columns(feature_hash().alias("row_hash"))
+        summaries.append(fold_summary(df))
+        for (fold,), part in df.group_by("fold"):
+            dst = out_root / str(fold) / f"{day.day}.parquet"
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            part.write_parquet(dst, compression="zstd")
+            if fold == Fold.TRAIN.value:
+                train_hashes.append(part.get_column("row_hash").unique())
+            else:
+                eval_files.append((day.dataset.value, day.day, str(fold), dst))
+        del df
+    if not summaries:
+        raise FileNotFoundError(
+            f"no clean parquet files under {processed_root}; run `nids data clean`"
+        )
+    train_set = (
+        pl.concat(train_hashes).unique().implode()
+        if train_hashes
+        else pl.Series("row_hash", [], dtype=pl.UInt64).implode()
+    )
+    purged: list[dict[str, object]] = []
+    for ds, day_id, fold, dst in eval_files:
+        before = pl.scan_parquet(dst).select(pl.len()).collect().item()
+        tmp = dst.with_suffix(".tmp.parquet")
+        pl.scan_parquet(dst).filter(~pl.col("row_hash").is_in(train_set)).sink_parquet(
+            tmp, compression="zstd"
+        )
+        after = pl.scan_parquet(tmp).select(pl.len()).collect().item()
+        tmp.replace(dst)
+        purged.append({"dataset": ds, "day": day_id, "fold": fold, "purged": int(before - after)})
+    summary = pl.concat(summaries)
+    purge_df = pl.DataFrame(
+        purged, schema={"dataset": pl.Utf8, "day": pl.Utf8, "fold": pl.Utf8, "purged": pl.Int64}
+    )
+    return (
+        summary.join(purge_df, on=["dataset", "day", "fold"], how="left")
+        .with_columns(pl.col("purged").fill_null(0))
+        .with_columns(rows=pl.col("rows") - pl.col("purged"))
         .sort(["dataset", "day", "fold"])
     )

@@ -14,6 +14,7 @@ from typing import Any
 
 import polars as pl
 
+from nids.data.cleaning import row_hash
 from nids.data.schema import DAYS, FEATURE_SPECS, FLOW_FEATURES, LABEL_TO_CLASS, META_COLUMNS
 
 
@@ -127,7 +128,9 @@ def validate_canonical(
         _expect(rep, "fwd_len_max_ge_min", bad == 0, violations=bad)
 
     if "dst_port" in cols and "label" in cols:
-        dup = df.height - df.unique(subset=[*feats_present, "dst_port", "label"]).height
+        dup = df.height - int(
+            df.select(row_hash([*feats_present, "dst_port", "label"]).n_unique()).item()
+        )
         frac = dup / max(df.height, 1)
         _expect(
             rep,
