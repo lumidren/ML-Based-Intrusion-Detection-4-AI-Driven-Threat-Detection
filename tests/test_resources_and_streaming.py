@@ -166,8 +166,8 @@ def test_split_dir_per_day_with_cross_day_purge(tmp_path: Path) -> None:
         df.write_parquet(dst)
     summary = split_dir(processed, SplitConfig())
     assert int(summary.get_column("purged_cross_day").sum()) == 1
-    train = pl.read_parquet(processed / "splits" / Fold.TRAIN.value)
-    test = pl.read_parquet(processed / "splits" / Fold.TEST.value)
+    train = pl.read_parquet(processed / "splits" / "campaign" / Fold.TRAIN.value)
+    test = pl.read_parquet(processed / "splits" / "campaign" / Fold.TEST.value)
     assert count_shared(train.get_column("row_hash"), test.get_column("row_hash")) == 0
     assert test.select(feature_hash().eq(pl.col("row_hash")).all()).item()
     assert int(summary.get_column("rows").sum()) == 59_999
@@ -203,4 +203,4 @@ def test_cli_data_commands(raw_root: Path, tmp_path: Path, monkeypatch: pytest.M
     assert "Total canonical rows" in card.read_text()
     res = run(app, ["--no-json-logs", "data", "split"])
     assert res.exit_code == 0, res.output
-    assert (tmp_path / "art" / "reports" / "split_summary.csv").exists()
+    assert (tmp_path / "art" / "reports" / "split_summary_campaign.csv").exists()

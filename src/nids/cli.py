@@ -119,17 +119,19 @@ def data_profile(card: Path = typer.Option(Path("docs/DATA_CARD.md"))) -> None:
 def data_split(
     holdout_days: str = typer.Option("", help="comma-separated day ids to hold out"),
     holdout_datasets: str = typer.Option("", help="comma-separated dataset ids to hold out"),
+    protocol: str = typer.Option("campaign", help="campaign (main) | day (ablation)"),
 ) -> None:
-    """Split the clean stage per day (temporal, group-aware) with a cross-day purge."""
+    """Split the clean stage (temporal, group-aware) with a cross-day purge."""
     from nids.data.splits import SplitConfig, split_dir
 
     s = get_settings()
     cfg = SplitConfig(
         holdout_days=tuple(x for x in holdout_days.split(",") if x),
         holdout_datasets=tuple(x for x in holdout_datasets.split(",") if x),
+        protocol=protocol,  # type: ignore[arg-type]  # validated by SplitConfig
     )
     summary = split_dir(s.processed_dir, cfg)
-    out = s.artifacts_root / "reports" / "split_summary.csv"
+    out = s.artifacts_root / "reports" / f"split_summary_{protocol}.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     summary.write_csv(out)
     console.print(summary)
