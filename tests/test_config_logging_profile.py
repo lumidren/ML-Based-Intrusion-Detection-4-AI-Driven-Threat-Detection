@@ -72,8 +72,10 @@ def test_profile_and_data_card_update(tmp_path: Path) -> None:
     days = {d["day"]: d for d in ds["days"]}
     assert days["2017-07-04-tue"]["expected_rows"] == 445_909
     assert days["d2"]["expected_rows"] is None
-    # attack rows all hit port 22, benign all 443 => purity 100%
-    assert ds["attack_rows_on_pure_ports_frac"] == 1.0
+    # attack rows all hit port 22, benign all 443 => port 22 is 100% attack
+    assert ds["top_attack_ports"][0]["port"] == 22
+    assert ds["top_attack_ports"][0]["attack_share"] == 1.0
+    assert "| 22 |" in to_markdown(p)
     md = to_markdown(p)
     assert "| 2017-07-04-tue |" in md and "445,909" in md
     card = tmp_path / "DATA_CARD.md"

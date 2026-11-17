@@ -368,12 +368,14 @@ def test_pcap_round_trip_and_frame(tmp_path: Path) -> None:
         "dst_port_bucket",
         "protocol",
     }
-    assert (
-        df.filter(pl.col("dst_port") == 22).height == 10
-    )  # 5 sessions, each split at the first FIN
-    assert df.filter(pl.col("dst_port") == 443).height == 10
+    ssh = (pl.col("dst_port") == 22) | (pl.col("src_port") == 22)
+    # 5 sessions, each split at the first FIN; the FIN/ACK + ACK tail becomes a
+    # server-initiated 2-packet flow (CICFlowMeter quirk Q1)
+    assert df.filter(ssh).height == 10
+    assert df.filter(pl.col("dst_port") == 22).height == 5
+    assert df.filter((pl.col("dst_port") == 443) | (pl.col("src_port") == 443)).height == 10
     assert df.filter(pl.col("protocol") == 17).height == 1
-    assert df.filter((pl.col("dst_port") >= 20) & (pl.col("dst_port") < 30)).height == 10
+    assert df.filter((pl.col("dst_port") >= 60) & (pl.col("dst_port") < 70)).height == 10
     assert df.filter(pl.col("dst_port") == 443)["pkt_len_std"].min() >= 0
     corrected = extract_flows(path, compat=False)
     assert corrected.filter(pl.col("dst_port") == 22).height == 5
@@ -397,3 +399,13 @@ def test_fin_packet_opening_a_flow_is_dropped_as_single() -> None:
     b = FlowBuilder()
     b.add_packet(pkt(0, flags=TCP_FIN | TCP_ACK))
     assert b.flush() == []
+
+
+def test_extract_flows_batches_and_concats(tmp_path: Path) -> None:
+    pkts = synth.benign_web(0.0, ["192.168.1.2"], "10.0.0.7", n=7, seed=3)
+    path = tmp_path / "b.pcap"
+    synth.write_pcap(path, pkts)
+    whole = extract_flows(path)
+    batched = extract_flows(path, batch=2)
+    assert batched.height == whole.height == 14
+    assert batched.equals(whole)
