@@ -1,352 +1,424 @@
 {
   "flows_extracted": 383002,
-  "published_rows_in_window": 384281,
-  "flows_matched": 193996,
-  "match_rate": 0.5065,
+  "published_rows_in_window": 1040440,
+  "flows_matched": 382586,
+  "match_rate": 0.9989,
+  "flows_matched_unambiguous": 37809,
   "matched_labels": {
-    "bruteforce_ftp": 193361,
-    "benign": 635
+    "bruteforce_ftp": 193360,
+    "bruteforce_ssh": 187589,
+    "benign": 1637
   },
   "features_compared": 68,
-  "features_fully_agreeing": 56,
+  "features_fully_agreeing": 61,
+  "model_inputs_compared": 58,
+  "model_inputs_fully_agreeing": 58,
   "per_feature": {
     "flow_duration": {
-      "agreement": 0.32035,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 37212128.0,
-      "mean_abs_diff": 1009.960121350019
+      "mean_abs_diff": 31389738.5
     },
     "fwd_pkt_len_max": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "fwd_pkt_len_min": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "fwd_pkt_len_mean": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "fwd_pkt_len_std": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "bwd_pkt_len_max": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "bwd_pkt_len_min": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "bwd_pkt_len_mean": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "bwd_pkt_len_std": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "flow_byts_s": {
-      "agreement": 0.99996,
-      "max_abs_diff": 258276.7651932225,
-      "mean_abs_diff": 33657.49118996388
+      "agreement": 0.99998,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "flow_pkts_s": {
-      "agreement": 0.16434,
-      "max_abs_diff": 1968253.9682539683,
-      "mean_abs_diff": 1062201.8748934946
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
+      "max_abs_diff": 0.013140237994170592,
+      "mean_abs_diff": 0.010480391442633227
     },
     "flow_iat_mean": {
-      "agreement": 0.32035,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 18606064.0,
-      "mean_abs_diff": 427.02741986745355
+      "mean_abs_diff": 15694869.25
     },
     "flow_iat_std": {
-      "agreement": 0.99993,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 57210863.44571126,
-      "mean_abs_diff": 11048679.123889916
+      "mean_abs_diff": 52399352.171146885
     },
     "flow_iat_max": {
-      "agreement": 0.32034,
-      "max_abs_diff": 33718870.0,
-      "mean_abs_diff": 853.0297987880259
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
+      "max_abs_diff": 27670515.0,
+      "mean_abs_diff": 21357068.0
     },
     "flow_iat_min": {
-      "agreement": 0.32037,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 53237864.0,
-      "mean_abs_diff": 816.7961333677168
+      "mean_abs_diff": 52746806.5
     },
     "fwd_iat_tot": {
-      "agreement": 0.99994,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 37212128.0,
-      "mean_abs_diff": 5317415.833333333
+      "mean_abs_diff": 31389738.5
     },
     "fwd_iat_mean": {
-      "agreement": 0.99994,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 18606064.0,
-      "mean_abs_diff": 2697517.5416666665
+      "mean_abs_diff": 15694869.25
     },
     "fwd_iat_std": {
-      "agreement": 0.99995,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 57210863.44571126,
-      "mean_abs_diff": 11646386.74556169
+      "mean_abs_diff": 52399352.171146885
     },
     "fwd_iat_max": {
-      "agreement": 0.99993,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 27670515.0,
-      "mean_abs_diff": 3362339.0
+      "mean_abs_diff": 21357068.0
     },
     "fwd_iat_min": {
-      "agreement": 0.99995,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 53237864.0,
-      "mean_abs_diff": 10645777.7
+      "mean_abs_diff": 52746806.5
     },
     "bwd_iat_tot": {
-      "agreement": 0.99994,
-      "max_abs_diff": 33987399.0,
-      "mean_abs_diff": 6195743.636363637
+      "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "bwd_iat_mean": {
-      "agreement": 0.99994,
-      "max_abs_diff": 33987399.0,
-      "mean_abs_diff": 6194263.363636363
+      "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "bwd_iat_std": {
-      "agreement": 0.99996,
-      "max_abs_diff": 12687.616974829783,
-      "mean_abs_diff": 3328.8566953173017
+      "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "bwd_iat_max": {
-      "agreement": 0.99994,
-      "max_abs_diff": 33987399.0,
-      "mean_abs_diff": 5679456.833333333
+      "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "bwd_iat_min": {
-      "agreement": 0.99994,
-      "max_abs_diff": 33987399.0,
-      "mean_abs_diff": 6192799.0
+      "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "fwd_psh_flags": {
-      "agreement": 0.00038,
+      "agreement": 0.2465,
+      "agreement_unambiguous": 0.02359,
       "max_abs_diff": 1.0,
       "mean_abs_diff": 1.0
     },
     "fwd_urg_flags": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "fwd_header_len": {
-      "agreement": 0.99998,
-      "max_abs_diff": 44.0,
-      "mean_abs_diff": 25.333333333333332
+      "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "bwd_header_len": {
-      "agreement": 0.99999,
-      "max_abs_diff": 12.0,
-      "mean_abs_diff": 12.0
+      "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "fwd_pkts_s": {
-      "agreement": 0.16434,
-      "max_abs_diff": 984126.9841269841,
-      "mean_abs_diff": 531100.937448458
+      "agreement": 0.99998,
+      "agreement_unambiguous": 0.99995,
+      "max_abs_diff": 0.013140237994170592,
+      "mean_abs_diff": 0.010480391442633227
     },
     "bwd_pkts_s": {
-      "agreement": 0.16435,
-      "max_abs_diff": 984126.9841269841,
-      "mean_abs_diff": 531107.4899592857
+      "agreement": 0.99998,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "pkt_len_min": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "pkt_len_max": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "pkt_len_mean": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "pkt_len_std": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "pkt_len_var": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "fin_flag_cnt": {
-      "agreement": 0.99952,
+      "agreement": 0.50828,
+      "agreement_unambiguous": 0.02737,
       "max_abs_diff": 1.0,
       "mean_abs_diff": 1.0
     },
     "syn_flag_cnt": {
-      "agreement": 0.00038,
+      "agreement": 0.2465,
+      "agreement_unambiguous": 0.02359,
       "max_abs_diff": 1.0,
       "mean_abs_diff": 1.0
     },
     "rst_flag_cnt": {
-      "agreement": 0.00066,
+      "agreement": 0.49188,
+      "agreement_unambiguous": 0.97397,
       "max_abs_diff": 1.0,
       "mean_abs_diff": 1.0
     },
     "psh_flag_cnt": {
-      "agreement": 0.00062,
+      "agreement": 0.49185,
+      "agreement_unambiguous": 0.97371,
       "max_abs_diff": 1.0,
       "mean_abs_diff": 1.0
     },
     "ack_flag_cnt": {
-      "agreement": 0.00045,
+      "agreement": 0.24654,
+      "agreement_unambiguous": 0.02402,
       "max_abs_diff": 1.0,
       "mean_abs_diff": 1.0
     },
     "urg_flag_cnt": {
-      "agreement": 0.99976,
+      "agreement": 0.75364,
+      "agreement_unambiguous": 0.97768,
       "max_abs_diff": 1.0,
       "mean_abs_diff": 1.0
     },
     "cwe_flag_cnt": {
-      "agreement": 1.0,
-      "max_abs_diff": 0.0,
-      "mean_abs_diff": 0.0
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
+      "max_abs_diff": 1.0,
+      "mean_abs_diff": 1.0
     },
     "ece_flag_cnt": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "down_up_ratio": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "pkt_size_avg": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "fwd_seg_size_avg": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "bwd_seg_size_avg": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "subflow_fwd_pkts": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "subflow_fwd_byts": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "subflow_bwd_pkts": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "subflow_bwd_byts": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "init_fwd_win_byts": {
-      "agreement": 0.99999,
-      "max_abs_diff": 38652.0,
-      "mean_abs_diff": 19386.0
+      "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0
     },
     "init_bwd_win_byts": {
-      "agreement": 0.99975,
-      "max_abs_diff": 26883.0,
-      "mean_abs_diff": 26219.666666666668
+      "agreement": 0.99993,
+      "agreement_unambiguous": 1.0,
+      "max_abs_diff": 10.0,
+      "mean_abs_diff": 10.0
     },
     "fwd_act_data_pkts": {
-      "agreement": 0.99987,
+      "agreement": 0.99989,
+      "agreement_unambiguous": 0.99897,
       "max_abs_diff": 1.0,
       "mean_abs_diff": 1.0
     },
     "fwd_seg_size_min": {
-      "agreement": 0.99986,
-      "max_abs_diff": 28.0,
-      "mean_abs_diff": 9.333333333333334
+      "agreement": 0.99989,
+      "agreement_unambiguous": 0.99899,
+      "max_abs_diff": 8.0,
+      "mean_abs_diff": 8.0
     },
     "active_mean": {
-      "agreement": 0.99998,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 4063073.0,
-      "mean_abs_diff": 1934184.5
+      "mean_abs_diff": 3572476.5
     },
     "active_std": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "active_max": {
-      "agreement": 0.99998,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 4063073.0,
-      "mean_abs_diff": 1934184.5
+      "mean_abs_diff": 3572476.5
     },
     "active_min": {
-      "agreement": 0.99998,
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 4063073.0,
-      "mean_abs_diff": 1934184.5
+      "mean_abs_diff": 3572476.5
     },
     "idle_mean": {
-      "agreement": 0.99998,
-      "max_abs_diff": 34368021.0,
-      "mean_abs_diff": 27856342.0
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
+      "max_abs_diff": 27670518.5,
+      "mean_abs_diff": 21357087.5
     },
     "idle_std": {
       "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
       "max_abs_diff": 50.2045814642,
       "mean_abs_diff": 27.577164466249997
     },
     "idle_max": {
-      "agreement": 0.99998,
-      "max_abs_diff": 34368021.0,
-      "mean_abs_diff": 27856332.25
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
+      "max_abs_diff": 27670515.0,
+      "mean_abs_diff": 21357068.0
     },
     "idle_min": {
-      "agreement": 0.99998,
-      "max_abs_diff": 34368021.0,
-      "mean_abs_diff": 27856351.75
+      "agreement": 0.99999,
+      "agreement_unambiguous": 0.99995,
+      "max_abs_diff": 27670522.0,
+      "mean_abs_diff": 21357107.0
     },
     "tot_fwd_pkts": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "tot_bwd_pkts": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "totlen_fwd_pkts": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     },
     "totlen_bwd_pkts": {
       "agreement": 1.0,
+      "agreement_unambiguous": 1.0,
       "max_abs_diff": 0.0,
       "mean_abs_diff": 0.0
     }
@@ -354,6 +426,6 @@
   "pcap": "data\\pcaps\\cseids2018\\Wednesday-14-02-2018_UCAP172.31.69.25.pcap",
   "mode": "compat",
   "packets_limit": null,
-  "extract_seconds": 76.5,
-  "peak_rss_mb": 1763
+  "extract_seconds": 77.4,
+  "peak_rss_mb": 1481
 }
