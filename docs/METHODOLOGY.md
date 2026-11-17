@@ -31,15 +31,31 @@ materially (Engelen et al. 2021; Lanvin et al. 2023; Liu et al. 2022).
 Leakage is the dominant source of inflated NIDS results. Controls, each enforced by a test
 in `tests/test_splits.py` and `tests/test_data_pipeline.py`:
 
-1. **Temporal split, never random.** Train on earlier capture time, validate on later time,
-   test on the latest time within each day, and additionally hold out *whole days* for
-   out-of-time evaluation. Random row splits put the two halves of the same attack burst in
-   train and test and are forbidden (`nids.data.splits.temporal_split`).
-2. **Group integrity.** Flows sharing a (dst port, protocol, 5-minute timestamp bucket)
-   group are kept on one side of every split, so a burst is never straddled. When IPs are
-   available (2018 day 20-02) the group also includes the source host.
-3. **Deduplication before splitting.** Exact duplicate rows (all features) are removed
-   first, so no identical vector appears on both sides.
+1. **Temporal split, never random.** Random row splits put the two halves of the same
+   attack burst in train and test and are forbidden. The main protocol is the *campaign*
+   split (`nids.data.splits`, `SplitConfig(protocol="campaign")`): a campaign is one label on
+   one day (one attack family's run, or that day's benign traffic), and each campaign is cut
+   60/20/20 into train/validation/test in its own time order. Every family that occurs on a
+   day is therefore present in every fold, and its evaluation flows are strictly later than
+   its training flows. The per-day split (`protocol="day"`, the whole day cut in time order)
+   is reported as an ablation: on our data it leaves 13 of 26 attack families without a
+   single test flow, because several days are one burst (16-02-2018: 87% of rows in one
+   5-minute bucket of DoS-Hulk) or run an attack only late in the day. Whole days or whole
+   datasets can additionally be held out for out-of-time and cross-dataset evaluation.
+2. **Group integrity.** Folds are assigned on contiguous time blocks, never on single rows:
+   60-second blocks for the campaign split and 5-minute blocks for the day split when
+   timestamps exist, blocks of 5,000 rows in capture order for CIC-IDS2017 (no timestamps).
+   A campaign shorter than five blocks is cut on 20 equal row blocks in time order, which is
+   the weakest guarantee in the protocol and is visible in the `group_id` (`:r` suffix).
+   `assert_no_leakage` checks that no block spans two folds and that, within every
+   campaign (or day), all training rows precede all validation rows, which precede all test
+   rows. CSE-CIC-IDS2018 timestamps are printed on a 12-hour clock without AM/PM and are
+   corrected before any ordering (DATA_CARD section 2).
+3. **Deduplication and purge.** Exact duplicate rows are removed during cleaning. After the
+   split, every validation/test row whose model-input vector also occurs in the training
+   fold is removed, first within the day and then across all days (cross-day purge on a
+   64-bit hash of the 59 model inputs), so the model is never evaluated on an input it was
+   fitted on. Purge counts are written to `artifacts/reports/split_summary_<protocol>.csv`.
 4. **Fit-on-train-only preprocessing.** Imputation constants, clipping bounds and scalers
    are fit on the training fold inside a `Pipeline`; the test fold never touches them.
    Verified by a test that mutates the test fold and asserts the fitted transformer is
