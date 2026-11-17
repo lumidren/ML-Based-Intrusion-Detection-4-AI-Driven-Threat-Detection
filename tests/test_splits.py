@@ -180,6 +180,7 @@ def test_campaign_split_puts_every_family_in_every_fold() -> None:
     day = temporal_split(df, SplitConfig(protocol="day"))
     camp = temporal_split(df, SplitConfig(protocol="campaign"))
     assert_no_leakage(camp)
+
     def attack_folds(x: pl.DataFrame) -> set[str]:
         return set(x.filter(pl.col("is_attack")).get_column("fold"))
 
