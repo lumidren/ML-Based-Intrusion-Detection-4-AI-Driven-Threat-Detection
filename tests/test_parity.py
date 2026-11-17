@@ -33,6 +33,8 @@ def test_identical_rows_agree_on_every_feature(tmp_path: Path) -> None:
     assert s["match_rate"] == 1.0 and s["matched_labels"] == {"benign": ours.height}
     assert s["features_compared"] == len(FLOW_FEATURES)
     assert s["features_fully_agreeing"] == len(FLOW_FEATURES)
+    assert s["model_inputs_fully_agreeing"] == s["model_inputs_compared"] == 58
+    assert "`syn_flag_cnt` (excluded)" in to_markdown(s, "t")
     assert set(KEY_FEATURES) | set(COMPARED) == set(FLOW_FEATURES)
 
 
@@ -78,3 +80,17 @@ def test_extract_to_parquet_parts(tmp_path: Path) -> None:
     synth.write_pcap(empty, [])
     assert extract_flows_to_parquet(empty, tmp_path / "e") == 0
     assert pl.read_parquet(tmp_path / "e" / "part-00000.parquet").height == 0
+
+
+def test_same_key_flows_are_paired_by_duration_rank(tmp_path: Path) -> None:
+    ours, published = _pair(tmp_path)
+    twin = ours.head(1).with_columns(pl.col("flow_duration") + 100.0)
+    twin_pub = published.head(1).with_columns(pl.col("flow_duration") + 100.0)
+    ours2 = pl.concat([twin, ours])  # the twin first on our side ...
+    pub2 = pl.concat([published, twin_pub])  # ... and last on the published side
+    s = compare(ours2.lazy(), pub2.lazy())
+    assert s["flows_matched"] == ours2.height
+    assert s["flows_matched_unambiguous"] == ours.height - 1
+    assert s["per_feature"]["flow_duration"]["agreement"] == 1.0
+    assert s["per_feature"]["flow_duration"]["agreement_unambiguous"] == 1.0
+    assert "unambiguous" in to_markdown(s, "t")
