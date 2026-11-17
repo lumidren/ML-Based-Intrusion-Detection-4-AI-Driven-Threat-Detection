@@ -79,11 +79,26 @@ def records_to_frame(records: list[FlowRecord]) -> pl.DataFrame:
 
 def extract_flows(
     path: Path,
+    *,
     compat: bool = True,
     limit: int | None = None,
     flow_timeout_us: int = 120_000_000,
     activity_timeout_us: int = 5_000_000,
+    batch: int = 50_000,
 ) -> pl.DataFrame:
-    """Extract all flows of a capture into a frame (convenience wrapper)."""
+    """Extract all flows of a capture into a frame.
+
+    Records are converted to columnar frames in batches of ``batch`` flows so that memory
+    stays proportional to the number of *open* flows rather than all emitted flows.
+    """
     builder = FlowBuilder(flow_timeout_us, activity_timeout_us, compat=compat)
-    return records_to_frame(list(iter_flows(path, builder, limit)))
+    frames: list[pl.DataFrame] = []
+    pending: list[FlowRecord] = []
+    for rec in iter_flows(path, builder, limit):
+        pending.append(rec)
+        if len(pending) >= batch:
+            frames.append(records_to_frame(pending))
+            pending = []
+    if pending or not frames:
+        frames.append(records_to_frame(pending))
+    return pl.concat(frames, how="vertical")
