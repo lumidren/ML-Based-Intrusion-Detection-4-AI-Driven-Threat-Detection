@@ -103,8 +103,30 @@ FLOW_FEATURES: Final[tuple[str, ...]] = tuple(s.name for s in FEATURE_SPECS)
 """The 68 CICFlowMeter statistics shared by both datasets."""
 
 DST_PORT_BUCKET: Final[str] = "dst_port_bucket"
-FEATURES: Final[tuple[str, ...]] = (*FLOW_FEATURES, DST_PORT_BUCKET)
-"""Model input columns, in order (69)."""
+UNREPRODUCIBLE: Final[tuple[str, ...]] = (
+    "fin_flag_cnt",
+    "syn_flag_cnt",
+    "rst_flag_cnt",
+    "psh_flag_cnt",
+    "ack_flag_cnt",
+    "urg_flag_cnt",
+    "cwe_flag_cnt",
+    "ece_flag_cnt",
+    "fwd_psh_flags",
+    "fwd_urg_flags",
+)
+"""Published columns whose values cannot be recomputed from packets (train/serve parity).
+
+The CSE-CIC-IDS2018 flag columns follow neither the TCP flags of the flow nor the released
+CICFlowMeter source (reports/parity_report.md, nids.features.flow Q11 note), so a model
+trained on them would see different values in production. They stay in the canonical data
+for analysis but are never model inputs."""
+
+FEATURES: Final[tuple[str, ...]] = (
+    *(f for f in FLOW_FEATURES if f not in UNREPRODUCIBLE),
+    DST_PORT_BUCKET,
+)
+"""Model input columns, in order (58 flow statistics + destination-port bucket = 59)."""
 
 #: Columns dropped on purpose. Kept here so the data card and tests can assert on them.
 DROPPED_2017: Final[tuple[str, ...]] = (

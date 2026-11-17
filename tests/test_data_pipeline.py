@@ -24,6 +24,7 @@ from nids.data.schema import (
     FEATURES,
     FLOW_FEATURES,
     LABEL_TO_CLASS,
+    UNREPRODUCIBLE,
     Dataset,
     DayInfo,
     days_for,
@@ -36,7 +37,8 @@ class TestSchema:
     def test_feature_count_and_uniqueness(self) -> None:
         assert len(FLOW_FEATURES) == 68
         assert len(set(FLOW_FEATURES)) == 68
-        assert len(FEATURES) == 69
+        assert len(FEATURES) == 59
+        assert not set(UNREPRODUCIBLE) & set(FEATURES) and set(UNREPRODUCIBLE) <= set(FLOW_FEATURES)
         assert len({s.cic2017 for s in FEATURE_SPECS}) == 68
         assert len({s.cse2018 for s in FEATURE_SPECS}) == 68
 
@@ -144,7 +146,14 @@ class TestLoaders:
         from nids.data.loaders import timestamp_expr
 
         raw = pl.DataFrame(
-            {"timestamp": ["14/02/2018 08:30:00", "14/02/2018 12:10:31", "14/02/2018 02:01:50 ", "x"]}
+            {
+                "timestamp": [
+                    "14/02/2018 08:30:00",
+                    "14/02/2018 12:10:31",
+                    "14/02/2018 02:01:50 ",
+                    "x",
+                ]
+            }
         )
         got = raw.select(timestamp_expr(Dataset.CSE2018)).to_series().to_list()
         assert got == [
