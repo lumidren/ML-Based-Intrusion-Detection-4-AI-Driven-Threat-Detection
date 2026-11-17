@@ -40,6 +40,14 @@ class Settings(BaseSettings):
     target_fpr: float = Field(default=0.001, gt=0.0, lt=1.0)
     max_batch: int = Field(default=1024, ge=1)
 
+    mem_limit_mb: int = Field(
+        default=2500, ge=256, description="Stop a job when its RSS exceeds this (MB)"
+    )
+    min_free_mb: int = Field(
+        default=1000, ge=0, description="Stop a large job when system free RAM drops below this"
+    )
+    threads: int = Field(default=4, ge=1, description="Native thread-pool size for heavy jobs")
+
     log_json: bool = Field(default=True)
     otel_endpoint: str | None = Field(
         default=None, description="OTLP gRPC endpoint; None disables export"

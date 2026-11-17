@@ -42,6 +42,8 @@ dependencies = [
   "pyyaml>=6.0",
   "jinja2>=3.1",
   "matplotlib>=3.9",
+  "psutil>=5.9",
+  "dpkt>=1.9",
 ]
 
 [project.optional-dependencies]
@@ -95,7 +97,7 @@ plugins = ["pydantic.mypy"]
 module = [
   "scapy.*", "lightgbm.*", "xgboost.*", "shap.*", "sklearn.*", "mlflow.*", "optuna.*",
   "river.*", "confluent_kafka.*", "pyarrow.*", "matplotlib.*", "great_expectations.*",
-  "redis.*", "dpkt.*", "prometheus_client.*", "structlog.*", "psycopg.*", "pandas.*", "scipy.*", "joblib.*",
+  "redis.*", "dpkt.*", "psutil.*", "prometheus_client.*", "structlog.*", "psycopg.*", "pandas.*", "scipy.*", "joblib.*",
 ]
 ignore_missing_imports = true
 
