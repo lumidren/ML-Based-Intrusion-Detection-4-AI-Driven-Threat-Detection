@@ -61,7 +61,18 @@ CICFlowMeter v3 features present in both datasets, after:
 * dropping the eight features that are constant zero in both datasets
   (`Bwd PSH Flags`, `Bwd URG Flags`, `Fwd Avg Bytes/Bulk`, `Fwd Avg Packets/Bulk`,
   `Fwd Avg Bulk Rate`, `Bwd Avg Bytes/Bulk`, `Bwd Avg Packets/Bulk`, `Bwd Avg Bulk Rate`);
-* mapping the 2018 column names to the 2017 names (`nids.data.schema.CSE2018_RENAME`).
+* mapping the 2018 column names to the 2017 names (`nids.data.schema.CSE2018_RENAME`);
+* excluding the ten TCP flag columns (`FIN`..`ECE` flag counts, `Fwd PSH Flags`,
+  `Fwd URG Flags`) from the model inputs (`nids.data.schema.UNREPRODUCIBLE`). On the
+  14-02-2018 victim capture the published flag values follow neither the packets' TCP flags
+  nor the released CICFlowMeter source (published `PSH` tracks SYN, `ACK`/`URG` track FIN,
+  `SYN`/`FIN`/`RST` are always 0), so a deployed extractor could not reproduce them. That
+  leaves 58 flow statistics plus the destination-port bucket (59 inputs).
+
+Real-traffic parity (`scripts/parity_report.py`, `reports/parity_report.md`): of 383,002
+flows extracted from the 853 MB capture, 382,586 (99.9%) match a published row on start
+second, destination port, protocol and packet/byte totals, and all 58 model-input statistics
+agree within tolerance on at least 99.9% of matched flows.
 
 The feature extractor in `nids.features.flow` computes exactly this schema from packets.
 Train/serve parity is tested by extracting features from synthetic PCAPs whose flow
