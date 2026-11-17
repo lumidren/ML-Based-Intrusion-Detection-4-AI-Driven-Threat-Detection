@@ -144,3 +144,18 @@ def test_time_ordering_violation_detected() -> None:
     )
     with pytest.raises(LeakageError, match="time ordering"):
         assert_no_leakage(broken)
+
+
+def test_purge_removes_eval_rows_matching_train_inputs() -> None:
+    from nids.data.splits import purge_eval_duplicates
+
+    df = temporal_split(make_canonical(n=30_000, days=("d1",)))
+    train_row = df.filter(pl.col("fold") == "train").head(1)
+    # same model inputs as a train row but a different raw port and label: survives cleaning
+    clone = train_row.with_columns(
+        fold=pl.lit("test"), dst_port=pl.lit(1, dtype=pl.Int64), label=pl.lit("portscan")
+    )
+    purged, counts = purge_eval_duplicates(pl.concat([df, clone]))
+    assert purged.height == df.height
+    assert dict(counts.iter_rows()) == {"test": 1}
+    assert_no_leakage(purged)

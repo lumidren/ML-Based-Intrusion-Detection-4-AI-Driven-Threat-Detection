@@ -165,7 +165,7 @@ def test_split_dir_per_day_with_cross_day_purge(tmp_path: Path) -> None:
         dst.parent.mkdir(parents=True, exist_ok=True)
         df.write_parquet(dst)
     summary = split_dir(processed, SplitConfig())
-    assert int(summary.get_column("purged").sum()) == 1
+    assert int(summary.get_column("purged_cross_day").sum()) == 1
     train = pl.read_parquet(processed / "splits" / Fold.TRAIN.value)
     test = pl.read_parquet(processed / "splits" / Fold.TEST.value)
     assert count_shared(train.get_column("row_hash"), test.get_column("row_hash")) == 0
