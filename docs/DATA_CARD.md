@@ -56,7 +56,8 @@ clean-up rules in `src/nids/data/cleaning.py`.
 |---|---|---|
 | Header row repeated inside several files | rows where `Dst Port == "Dst Port"` | filtered in `read_raw` |
 | Column names differ from 2017 (`Tot Fwd Pkts` vs `Total Fwd Packets`, ...) | header inspection | `CSE2018_RENAME` to the canonical schema |
-| Timestamps are `dd/mm/yyyy HH:MM:SS` local time with no zone | inspection | parsed as naive local time; used only for ordering and grouping |
+| Timestamps are `dd/mm/yyyy hh:mm:ss` local time (UTC-4) with no zone, printed on a **12-hour clock without AM/PM** | printed hours are only 1-5, 7 and 8-12 on all six days; SSH brute force (14:01-15:32 per the CIC schedule) is printed as 02:01-03:32, DoS-Hulk (13:45) as 01:45, and the extracted flows of the 14-02 victim capture only line up with the CSV rows after the correction | `loaders.timestamp_expr`: printed hours below 8 get +12 h; used only for ordering, grouping and parity matching, never as a feature |
+| Some days are one attack burst (16-02: 87% of cleaned rows fall in the 13:45 five-minute bucket of DoS-Hulk) | `artifacts/reports/split_summary.csv` | a per-day time split cannot give such days validation/test rows; the model protocol splits per attack campaign instead (see METHODOLOGY) |
 | The "Infilteration" label on 28-02 and 01-03 marks *all* traffic of the victim host for hours, most of it ordinary (Liu et al. 2022) | literature | `label_reliable=False`; excluded from training by default |
 | Files are capped at 1,048,575 rows (Excel limit) - the daily traffic was truncated, so days are *not* complete | row counts | documented; temporal splits are within-file |
 | Many flows with `Dst Port 0`, `Protocol 0` and 3 packets (ARP/ICMP-like noise) | measured below | kept; they are legitimately benign background |
