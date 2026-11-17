@@ -33,6 +33,21 @@ from nids.data.schema import (
 CANONICAL_COLUMNS: tuple[str, ...] = (*META_COLUMNS, *FLOW_FEATURES, "dst_port_bucket")
 Stage = Literal["canonical", "clean"]
 
+PM_CUTOFF_HOUR = 8
+"""CSE-CIC-IDS2018 prints its timestamps on a 12-hour clock without AM/PM. The captures run
+from about 08:30 to 17:30 local time, so a printed hour below 8 is an afternoon hour. Verified
+on all six days: printed hours are 1-5, 7 and 8-12 (never 0, 6 or 13+), and the attack windows
+match the published schedule only with this correction (e.g. SSH brute force 14:01-15:32 on
+14-02 is printed as 02:01-03:32, DoS-Hulk 13:45 on 16-02 as 01:45)."""
+
+
+def timestamp_expr(dataset: Dataset) -> pl.Expr:
+    """Parse the raw ``Timestamp`` column into naive local time on a 24-hour clock."""
+    ts = pl.col("timestamp").str.strip_chars().str.to_datetime("%d/%m/%Y %H:%M:%S", strict=False)
+    if dataset is not Dataset.CSE2018:
+        return ts
+    return pl.when(ts.dt.hour() < PM_CUTOFF_HOUR).then(ts + pl.duration(hours=12)).otherwise(ts)
+
 
 def _strip_names(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.rename({c: c.strip() for c in df.collect_schema().names()})
@@ -117,7 +132,7 @@ def canonical_lazy(day: DayInfo, raw_root: Path) -> pl.LazyFrame:
             else pl.lit(None, dtype=pl.Int64)
         ).alias("protocol"),
         (
-            pl.col("timestamp").str.strip_chars().str.to_datetime("%d/%m/%Y %H:%M:%S", strict=False)
+            timestamp_expr(day.dataset)
             if "timestamp" in schema
             else pl.lit(None, dtype=pl.Datetime("us"))
         ).alias("timestamp"),

@@ -140,6 +140,22 @@ class TestLoaders:
         assert df.get_column("timestamp").min() == datetime(2018, 2, 14, 8, 0, 0)
         assert df.select(pl.col("dst_port_bucket").is_in([0, 1, 2, 3]).all()).item()
 
+    def test_2018_twelve_hour_clock_is_corrected(self) -> None:
+        from nids.data.loaders import timestamp_expr
+
+        raw = pl.DataFrame(
+            {"timestamp": ["14/02/2018 08:30:00", "14/02/2018 12:10:31", "14/02/2018 02:01:50 ", "x"]}
+        )
+        got = raw.select(timestamp_expr(Dataset.CSE2018)).to_series().to_list()
+        assert got == [
+            datetime(2018, 2, 14, 8, 30),
+            datetime(2018, 2, 14, 12, 10, 31),
+            datetime(2018, 2, 14, 14, 1, 50),
+            None,
+        ]
+        plain = raw.select(timestamp_expr(Dataset.CIC2017)).to_series().to_list()
+        assert plain[2] == datetime(2018, 2, 14, 2, 1, 50)
+
     def test_missing_file_raises(self, tmp_path: Path, day_2017: DayInfo) -> None:
         with pytest.raises(FileNotFoundError):
             canonicalise(day_2017, tmp_path)
