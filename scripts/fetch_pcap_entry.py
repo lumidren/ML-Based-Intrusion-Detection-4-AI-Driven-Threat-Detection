@@ -64,11 +64,11 @@ def parse_central_directory(tail: bytes, total: int) -> list[ZipEntry]:
     i = tail.rfind(b"PK\x05\x06")
     if i < 0:
         raise ValueError("end-of-central-directory record not found in tail")
-    _, _, _, _, ntot, cdsize, cdoff, _ = struct.unpack("<IHHHHIIH", tail[i : i + 22])
+    _, _, _, _, ntot, _cdsize, cdoff, _ = struct.unpack("<IHHHHIIH", tail[i : i + 22])
     if cdoff == 0xFFFFFFFF or ntot == 0xFFFF:
         j = tail.rfind(b"PK\x06\x06")
         rec = struct.unpack("<IQHHIIQQQQ", tail[j : j + 56])
-        ntot, cdsize, cdoff = rec[6], rec[8], rec[9]
+        ntot, cdoff = rec[6], rec[9]
     p = cdoff - base
     if p < 0:
         raise ValueError("central directory larger than fetched tail; increase TAIL_BYTES")
@@ -109,14 +109,21 @@ def fetch_entry(client: httpx.Client, url: str, entry: ZipEntry, out: Path) -> s
     sha = hashlib.sha256()
     inflater = zlib.decompressobj(-15) if entry.method == 8 else None
     done = 0
-    with out.open("wb") as fh, client.stream("GET", url, headers={"Range": f"bytes={start}-{end}"}) as resp:
+    with (
+        out.open("wb") as fh,
+        client.stream("GET", url, headers={"Range": f"bytes={start}-{end}"}) as resp,
+    ):
         resp.raise_for_status()
         for chunk in resp.iter_bytes(CHUNK):
             data = inflater.decompress(chunk) if inflater else chunk
             fh.write(data)
             sha.update(data)
             done += len(chunk)
-            print(f"\r{done / entry.csize:6.1%} of {entry.csize / 1e6:.0f} MB", end="", file=sys.stderr)
+            print(
+                f"\r{done / entry.csize:6.1%} of {entry.csize / 1e6:.0f} MB",
+                end="",
+                file=sys.stderr,
+            )
         if inflater:
             data = inflater.flush()
             fh.write(data)
@@ -126,7 +133,9 @@ def fetch_entry(client: httpx.Client, url: str, entry: ZipEntry, out: Path) -> s
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--day", required=True, help="e.g. Wednesday-14-02-2018")
     ap.add_argument("--list", action="store_true", help="list entries and exit")
     ap.add_argument("--entry", help="entry name inside the zip, e.g. pcap/UCAP172.31.69.25")
@@ -139,7 +148,9 @@ def main() -> int:
         if args.list or not args.entry:
             for e in entries:
                 if e.csize:
-                    print(f"{e.name:50s} compressed={e.csize / 1e6:9.1f} MB  pcap={e.usize / 1e6:9.1f} MB")
+                    print(
+                        f"{e.name:50s} compressed={e.csize / 1e6:9.1f} MB  pcap={e.usize / 1e6:9.1f} MB"
+                    )
             return 0
         match = [e for e in entries if e.name == args.entry]
         if not match:
