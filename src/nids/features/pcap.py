@@ -102,3 +102,35 @@ def extract_flows(
     if pending or not frames:
         frames.append(records_to_frame(pending))
     return pl.concat(frames, how="vertical")
+
+
+def extract_flows_to_parquet(
+    path: Path,
+    out_dir: Path,
+    *,
+    compat: bool = True,
+    limit: int | None = None,
+    flow_timeout_us: int = 120_000_000,
+    activity_timeout_us: int = 5_000_000,
+    batch: int = 50_000,
+) -> int:
+    """Stream a capture's flows into ``out_dir/part-*.parquet``; return the number of flows.
+
+    Memory stays bounded by the open flows plus one batch, whatever the capture size.
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for old in out_dir.glob("part-*.parquet"):
+        old.unlink()
+    builder = FlowBuilder(flow_timeout_us, activity_timeout_us, compat=compat)
+    pending: list[FlowRecord] = []
+    n = part = 0
+    for rec in iter_flows(path, builder, limit):
+        pending.append(rec)
+        n += 1
+        if len(pending) >= batch:
+            records_to_frame(pending).write_parquet(out_dir / f"part-{part:05d}.parquet")
+            part += 1
+            pending = []
+    if pending or part == 0:
+        records_to_frame(pending).write_parquet(out_dir / f"part-{part:05d}.parquet")
+    return n
